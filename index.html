@@ -8,9 +8,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" id="theme-stylesheet" href="styles.css" />
+    <link rel="alternate stylesheet" href="styles-apple.css" title="apple" />
   </head>
   <body>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">🍎 Tema Apple</button>
     <main class="page-shell">
       <aside class="sidebar">
         <img src="fotocv.jpg" alt="Miguel Benjumea Hidalgo" class="profile-photo" />
@@ -103,5 +105,34 @@
         <footer><span>© 2026 Miguel Benjumea Hidalgo</span><a href="mailto:benemerito.benjumea@gmail.com">Hablemos <span aria-hidden="true">↗</span></a></footer>
       </div>
     </main>
+    <script>
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeStylesheet = document.getElementById('theme-stylesheet');
+      const appleStylesheet = document.querySelector('link[title="apple"]');
+      
+      // Detectar tema guardado o preferencia del sistema
+      const savedTheme = localStorage.getItem('cv-theme') || 'original';
+      
+      function setTheme(theme) {
+        if (theme === 'apple') {
+          themeStylesheet.href = 'styles-apple.css';
+          themeToggle.textContent = '🎨 Tema Original';
+        } else {
+          themeStylesheet.href = 'styles.css';
+          themeToggle.textContent = '🍎 Tema Apple';
+        }
+        localStorage.setItem('cv-theme', theme);
+      }
+      
+      // Aplicar tema guardado
+      setTheme(savedTheme);
+      
+      // Toggle al hacer click
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = localStorage.getItem('cv-theme') || 'original';
+        const newTheme = currentTheme === 'original' ? 'apple' : 'original';
+        setTheme(newTheme);
+      });
+    </script>
   </body>
 </html>
