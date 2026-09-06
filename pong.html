@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong - Miguel Benjumea</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      display: flex; 
+      flex-direction: column;
+      justify-content: center; 
+      align-items: center; 
+      min-height: 100vh; 
+      background: linear-gradient(135deg, #182321 0%, #2a3d3a 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #gameContainer { position: relative; width: 800px; height: 400px; background: #f7f5ef; border: 3px solid #182321; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    canvas { display: block; width: 100%; height: 100%; }
+    .info { color: #f7f5ef; text-align: center; margin-top: 20px; }
+    .info h2 { font-size: 1.5rem; margin-bottom: 10px; }
+    .controls { color: #d8e8df; font-size: 0.9rem; line-height: 1.6; }
+    .controls strong { color: #e5654d; }
+    a { color: #e5654d; text-decoration: none; margin-top: 15px; display: inline-block; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="pongCanvas"></canvas>
+  </div>
+  <div class="info">
+    <h2>🎮 Pong Game</h2>
+    <div class="controls">
+      <strong>Player 1:</strong> W/S para mover<br>
+      <strong>Player 2:</strong> ↑/↓ para mover<br>
+      <strong>Espacio:</strong> Iniciar/Pausar
+    </div>
+    <a href="javascript:history.back()">← Volver al CV</a>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('pongCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Configurar canvas
+    canvas.width = 800;
+    canvas.height = 400;
+
+    // Objetos del juego
+    const ball = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      size: 5,
+      speedX: 4,
+      speedY: 4,
+      maxSpeed: 7
+    };
+
+    const paddle = {
+      width: 10,
+      height: 80,
+      speed: 6
+    };
+
+    const player1 = {
+      x: 10,
+      y: canvas.height / 2 - paddle.height / 2,
+      width: paddle.width,
+      height: paddle.height,
+      score: 0,
+      keys: {}
+    };
+
+    const player2 = {
+      x: canvas.width - paddle.width - 10,
+      y: canvas.height / 2 - paddle.height / 2,
+      width: paddle.width,
+      height: paddle.height,
+      score: 0,
+      keys: {}
+    };
+
+    let gameRunning = false;
+
+    // Event listeners
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        gameRunning = !gameRunning;
+      }
+      if (e.key.toLowerCase() === 'w') player1.keys['w'] = true;
+      if (e.key.toLowerCase() === 's') player1.keys['s'] = true;
+      if (e.key === 'ArrowUp') player2.keys['arrowUp'] = true;
+      if (e.key === 'ArrowDown') player2.keys['arrowDown'] = true;
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.key.toLowerCase() === 'w') player1.keys['w'] = false;
+      if (e.key.toLowerCase() === 's') player1.keys['s'] = false;
+      if (e.key === 'ArrowUp') player2.keys['arrowUp'] = false;
+      if (e.key === 'ArrowDown') player2.keys['arrowDown'] = false;
+    });
+
+    // Funciones de juego
+    function update() {
+      if (!gameRunning) return;
+
+      // Movimiento del jugador 1
+      if (player1.keys['w'] && player1.y > 0) player1.y -= paddle.speed;
+      if (player1.keys['s'] && player1.y < canvas.height - player1.height) player1.y += paddle.speed;
+
+      // Movimiento del jugador 2
+      if (player2.keys['arrowUp'] && player2.y > 0) player2.y -= paddle.speed;
+      if (player2.keys['arrowDown'] && player2.y < canvas.height - player2.height) player2.y += paddle.speed;
+
+      // Movimiento de la pelota
+      ball.x += ball.speedX;
+      ball.y += ball.speedY;
+
+      // Rebote en bordes superior e inferior
+      if (ball.y - ball.size < 0 || ball.y + ball.size > canvas.height) {
+        ball.speedY = -ball.speedY;
+      }
+
+      // Colisión con palas
+      if (
+        ball.x - ball.size < player1.x + player1.width &&
+        ball.y > player1.y &&
+        ball.y < player1.y + player1.height
+      ) {
+        ball.speedX = -ball.speedX;
+        ball.x = player1.x + player1.width + ball.size;
+        ball.speedY += (ball.y - (player1.y + player1.height / 2)) * 0.1;
+      }
+
+      if (
+        ball.x + ball.size > player2.x &&
+        ball.y > player2.y &&
+        ball.y < player2.y + player2.height
+      ) {
+        ball.speedX = -ball.speedX;
+        ball.x = player2.x - ball.size;
+        ball.speedY += (ball.y - (player2.y + player2.height / 2)) * 0.1;
+      }
+
+      // Limitar velocidad
+      if (Math.abs(ball.speedY) > ball.maxSpeed) {
+        ball.speedY = ball.maxSpeed * (ball.speedY > 0 ? 1 : -1);
+      }
+
+      // Puntos
+      if (ball.x < 0) {
+        player2.score++;
+        resetBall();
+      }
+      if (ball.x > canvas.width) {
+        player1.score++;
+        resetBall();
+      }
+    }
+
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.speedX = (Math.random() > 0.5 ? 1 : -1) * 4;
+      ball.speedY = (Math.random() - 0.5) * 4;
+      gameRunning = false;
+    }
+
+    function draw() {
+      // Fondo
+      ctx.fillStyle = '#f7f5ef';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Línea central
+      ctx.strokeStyle = '#ccc';
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Palas
+      ctx.fillStyle = '#182321';
+      ctx.fillRect(player1.x, player1.y, player1.width, player1.height);
+      ctx.fillRect(player2.x, player2.y, player2.width, player2.height);
+
+      // Pelota
+      ctx.fillStyle = '#e5654d';
+      ctx.fillRect(ball.x - ball.size, ball.y - ball.size, ball.size * 2, ball.size * 2);
+
+      // Puntuación
+      ctx.fillStyle = '#182321';
+      ctx.font = 'bold 32px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(player1.score, canvas.width / 4, 40);
+      ctx.fillText(player2.score, (canvas.width * 3) / 4, 40);
+
+      // Estado
+      if (!gameRunning) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#182321';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('Presiona ESPACIO para iniciar', canvas.width / 2, canvas.height / 2);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
