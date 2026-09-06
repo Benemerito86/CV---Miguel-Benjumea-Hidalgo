@@ -183,8 +183,13 @@ miDiv2.addEventListener('mousemove', function(event) {
     const y = event.offsetY;
 
     bloque.style.left = 900 + "px";
-    if (y<=485&&y>=15){
-        bloque.style.top = y-15 + "px";
+    const maxY = contenedor.clientHeight - bloque.clientHeight;
+    if (y <= 0) {
+        bloque.style.top = 0 + "px";
+    } else if (y >= maxY) {
+        bloque.style.top = maxY + "px";
+    } else {
+        bloque.style.top = y + "px";
     }
 });
 const pj2 = document.getElementById("pj2");
